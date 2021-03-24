@@ -1,0 +1,6 @@
+project1/original_data/
+project2/original_data/
+.idea/
+venv/
+**/*.pyc
+**/*.ini
