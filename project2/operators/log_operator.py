@@ -25,7 +25,6 @@ class LogOperator:
 
     def query_log(self, machine_name, tid):
         self.cursor.execute(f"select * from log_table where lid = (select max(lid) from log_table where tid = '{tid}' and machine_id='{machine_name}')")
-        # self.cursor.execute(f"select * from log_table where machine_id='{machine_name}' and tid='{tid}'")
         return self.cursor.fetchall()
 
     def query_agent_log(self, machine_id, tid):
@@ -49,18 +48,3 @@ class LogOperator:
                 max_log_id = int(job_log_row[0])
                 break
         return max_log_id
-
-
-
-
-if __name__ == '__main__':
-    # test
-    log_operator = LogOperator()
-    # log_operator.insert_coordinator_log("tid_test112", "ABORT")
-    # log_operator.insert_agent_log("113", "tid_test112", "PREPARE")
-
-    rows = log_operator.query_agent_log("113", "tid_test112")
-    for row in rows:
-        print('id=' + str(row[0]) + ' machine =' + str(row[1]) +
-              ' tid = ' + str(row[2]) + ' status =' + str(row[3]))
-    log_operator.close()

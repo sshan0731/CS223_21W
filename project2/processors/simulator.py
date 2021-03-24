@@ -46,12 +46,10 @@ class Simulator:
             self.reset_machine_status()
             self.allocate_current_transaction()  # put sqls into agent cache
             self.coordinator_send_message("PREPARE")
-            # print("after set_coordinator_status prepare")
             self.wait_agents_to_process_sqls()
             print("in coordinator, after agents finish processing sqls")
             vote_res = self.get_vote_result()
             self.coordinator_send_message(vote_res)
-            # self.agent_cache.set_coordinator_status(vote_res)
             print("in coordinator, after set_coordinator_status")
             self.wait_agents_to_return_ack()
             print("in coordinator, after wait_agents_to_return_ack")
@@ -107,7 +105,6 @@ class Simulator:
         """
         crash_status = -1
         coordinator_log_rows = self.agent_cache.log_operator.query_coordinator_log(self.agent_cache.get_tid())
-        # agent_rows = self.agent_cache.log_operator.query_agent_log(self.agent_id, self.agent_cache.get_tid())
         if str(coordinator_log_rows[0][3]) == "INITIATE":
             crash_status = 0  # no need to recover
         if str(coordinator_log_rows[0][3]) == "PREPARE":
@@ -136,13 +133,10 @@ class Simulator:
         self.agent_cache.close()
 
     def reset_machine_status(self):
-        print("in reset_machine_status----------")
         self.coordinator_send_message("INITIATE")
-        print(f"coordinator status-- {self.agent_cache.get_coordinator_status()}")
         for i in range(1, self.agent_cache.num_of_agents + 1):
             self.agent_cache.set_machine_status_dict(i, "INITIATE")
             self.agent_cache.log_operator.insert_agent_log(i, self.agent_cache.get_tid(), "INITIATE")
-            print(f"{i}-- {self.agent_cache.get_machine_status(i)}")
 
     def wait_agents_to_return_ack(self):
         time.sleep(1)
@@ -153,7 +147,6 @@ class Simulator:
     def count_num_of_a_status(self, status):
         counter = 0
         for i in range(1, self.agent_cache.num_of_agents + 1):
-            print(f"{i}-- {self.agent_cache.get_machine_status(i)}")
             if self.check_machine_status(i, status):
                 counter += 1
         return counter
@@ -175,13 +168,10 @@ class Simulator:
             self.agent_sql_queue_dict[hash_id].put(sql)
 
     def wait_agents_to_process_sqls(self):
-        print("wait_agents_to_process_sqls...")
         while True:
             is_transanction_finished = True
             for i in range(1, self.agent_cache.num_of_agents + 1):
                 if self.agent_cache.get_machine_status(i) != "ABORT" and self.agent_cache.get_machine_status(i) != "COMMIT":
-                # if self.agents[i - 1].sql_queue.qsize() != 0 or self.agent_cache.get_machine_status(i) == "INITIATE":
-                #     print(f"wait_agents_to_process_sqls - {i} - {self.agent_cache.get_machine_status(i)}")
                     is_transanction_finished = False
                     break
             if is_transanction_finished:
@@ -189,17 +179,9 @@ class Simulator:
 
     def set_agents(self, num_of_agents):
         agents = []
-
         for i in range(1, 1 + num_of_agents):
             queue = Manager().Queue()
-            # agent_db_executor = AgentDBExecutor(i)
-            # self.agent_db_executor_dict[i] = agent_db_executor
             agent = Agent(agent_id=i, agent_cache=self.agent_cache, queue=queue)
             self.agent_sql_queue_dict[agent.agent_id] = queue
             agents.append(agent)
         return agents
-
-
-if __name__ == '__main__':
-    sim = Simulator(freq="low", num_of_agents=3)
-    sim.start()

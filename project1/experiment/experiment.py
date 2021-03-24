@@ -42,8 +42,6 @@ class Experiment:
         # mpl for mysql connection: Size can not be changed for active pools.
         connection = DBConnection(db_type=self.db_type, mpl=self.mpl)
         cursor = connection.get_cursor()
-        # for f in list(("../original_data/schema/drop.sql", "../original_data/schema/create.sql")) + [
-        #     f"../original_data/data/{self.freq}_concurrency/metadata.sql"]:
         if self.db_type == 'mysql':
             cursor.execute("drop database if exists cs223; ")
             connection.commit()
@@ -77,7 +75,6 @@ class Experiment:
         cursor = connection.get_cursor()
         cursor.execute(f"SET TRANSACTION ISOLATION LEVEL {isolation_level}")
         connection.commit()
-        # connection.reset_commit_num()
         cursor.close()
         connection.close()
 
@@ -89,21 +86,20 @@ class Experiment:
 
 def run_exp1_varying_mpl():
     freq = 'low'
+    iso_idx = 2
     for db_type in ['mysql', 'postgresql']:
-        # for mpl in [2, 4, 6, 8, 10]:
-        mpl = 6
-        iso_idx = 2
-        exp = Experiment(db_type=db_type, freq=freq, isolation_level=iso_idx, mpl=mpl, transaction_style='both')
-        print(f"db_type={db_type}, freq={freq}, iso_level={iso_idx}, mpl={mpl}, transaction='both'")
-        exp.run_experiment()
-        print("--------------")
+        for mpl in [2, 4, 6, 8, 10]:
+            exp = Experiment(db_type=db_type, freq=freq, isolation_level=iso_idx, mpl=mpl, transaction_style='both')
+            print(f"db_type={db_type}, freq={freq}, iso_level={iso_idx}, mpl={mpl}, transaction='both'")
+            exp.run_experiment()
+            print("--------------")
 
 
 def run_exp2_varying_isolation_level():
     freq = 'low'
     mpl = 4
-    for db_type in ['mysql', 'postgresql']:
-        for iso_idx in [4, 3, 2, 1]: #  range(1, 5):
+    for db_type in ['postgresql', 'mysql']:
+        for iso_idx in range(1, 5):
             exp = Experiment(db_type=db_type, freq=freq, isolation_level=iso_idx, mpl=mpl, transaction_style='both')
             print(f"db_type={db_type}, freq={freq}, iso_level={iso_idx}, mpl={mpl}, transaction='both'")
             exp.run_experiment()

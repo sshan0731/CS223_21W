@@ -19,28 +19,3 @@ class JobCache:
 
     def job_cache_queue_len(self):
         return self.t_queue.qsize()
-    # def run(self) -> None:
-    #     i = 0
-    #     is_end = False
-    #     while True:
-    #         i += 1
-    #         print(f"--------simulator----{i}--{self.job_reader.get_queue_len()}---------")
-    #
-    #         if self.job_reader.get_queue_len() > 0:
-    #             idx = random.randint(len(self.workers) - 1)
-    #             print(f"worker-{idx} receives jobs")
-    #             self.workers[idx].receive_jobs(self.job_reader.t_queue)
-    #             self.job_reader.reset_queue()
-    #         else:
-    #             print("~~~44546465~~~~~~~~~~~~~~")
-    #             counter = 0
-    #             while True:
-    #                 print("========77777=========================")
-    #                 print(f"main --- sleep --- {counter} ---- ")
-    #                 time.sleep(100)
-    #                 counter += 1
-    #                 if counter > 10:
-    #                     is_end = True
-    #                     break
-    #         if is_end:
-    #             break

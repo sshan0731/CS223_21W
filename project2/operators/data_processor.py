@@ -5,11 +5,7 @@ from project1.operators.sql_reader import SQLReader
 def sort_file(src_file_path, obj_file_path):
     sql_reader = SQLReader(src_file_path)
     sqls = []
-    i = 0
     while 1:
-        # i += 1
-        # if i%100 == 0:
-        #     print(i)
         sql = sql_reader.get_next_insert_sql()
         if not sql:
             break
@@ -42,8 +38,3 @@ class DataProcessor:
     def process_data(self):
         if not self.is_sorted():
             self.create_sorted_files()
-
-
-if __name__ == '__main__':
-    data_processor = DataProcessor(freq='low')
-    data_processor.process_data()

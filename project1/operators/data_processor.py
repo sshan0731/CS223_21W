@@ -5,11 +5,7 @@ from project1.operators.sql_reader import SQLReader
 def sort_file(src_file_path, obj_file_path):
     sql_reader = SQLReader(src_file_path)
     sqls = []
-    # i = 0
     while 1:
-        # i += 1
-        # if i%100 == 0:
-        #     print(i)
         sql = sql_reader.get_next_insert_sql()
         if not sql:
             break
@@ -27,7 +23,6 @@ def sort_query_file(src_file_path, obj_file_path):
     queries_with_timestamp = []
     while True:
         query = sql_reader.process_query_get_next_query_with_timestamp()
-        # print(query)
         if not query:
             break
         queries_with_timestamp.append(query)
@@ -70,6 +65,7 @@ def translate_a_sql_to_mysql_format(query):
         query = query.replace("=ANY(array[", " in (").replace("]", "")
     return query
 
+
 class DataProcessor:
     def __init__(self, freq='low'):
         self.freq = freq
@@ -81,6 +77,7 @@ class DataProcessor:
     # @staticmethod
     def is_sorted(self, file):
         return Path(file).is_file()
+
     # def create_sorted_files(self):
 
     def process_data(self):
@@ -96,13 +93,8 @@ class DataProcessor:
             create_mysql_query_file(self.query_file, self.mysql_query_file)
 
 
-
-
-
-
 if __name__ == '__main__':
     # data_processor = DataProcessor(freq='low')
     # data_processor.process_data()
     create_mysql_query_file(f"../original_data/queries/low_concurrency/queries_sorted.txt",
                             f"../original_data/queries/low_concurrency/queries_mysql_sorted.txt")
-

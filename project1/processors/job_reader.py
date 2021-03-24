@@ -1,8 +1,6 @@
 from multiprocessing import Process
-
 from project1.models.transaction import Transaction
 from datetime import datetime
-
 from project1.operators.sql_reader import SQLReader
 from project1.processors.job_cache import JobCache
 
@@ -27,7 +25,6 @@ class JobReader(Process):
 
     def is_in_epoch_interval(self, timestamp):
         dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S').strftime('%s')
-        # print(f"in is_in_epoch_interval: {int(dt)}")
         if self.epoch_start_time == "":
             self.epoch_start_time = epoch_length * (int(dt) / epoch_length)
             return True
@@ -54,7 +51,6 @@ class JobReader(Process):
             self.read_a_query_file(self.query_file)
 
     def read_a_query_file(self, file_path):
-        # print("read a query file...")
         sql_reader = SQLReader(file_path)
         while True:
             current_sql = sql_reader.get_next_query_sql()
@@ -65,25 +61,7 @@ class JobReader(Process):
             self.job_cache.add_job(self.current_transaction)
         sql_reader.close()
 
-    # def read_a_query_file(self, file_path): # multiple sql --> a transaction
-    #     print("read a query file...")
-    #     sql_reader = SQLReader(file_path)
-    #     while True:
-    #         sql_line = sql_reader.get_next_query_sql_line()
-    #         if not sql_line:
-    #             self.job_cache.add_job(self.current_transaction)
-    #             break
-    #         sql = sql_reader.remove_time_in_a_query_line(sql_line)
-    #         if self.is_in_epoch_interval(sql_reader.extract_query_timestamp(sql_line)):
-    #             self.current_transaction.add_a_sql_to_list(sql)
-    #         else:
-    #             self.job_cache.add_job(self.current_transaction)
-    #             transaction = Transaction()
-    #             transaction.add_a_sql_to_list(sql)
-    #     sql_reader.close()
-
     def read_a_insert_file(self, file_path):
-        # print("read a insert file...")
         sql_reader = SQLReader(file_path)
         while True:
             current_sql = sql_reader.get_next_insert_sql()
