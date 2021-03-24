@@ -26,7 +26,7 @@ def sort_query_file(src_file_path, obj_file_path):
     sql_reader = SQLReader(src_file_path)
     queries_with_timestamp = []
     while True:
-        query = sql_reader.get_next_query_sql_line()
+        query = sql_reader.process_query_get_next_query_with_timestamp()
         # print(query)
         if not query:
             break
@@ -39,8 +39,6 @@ def sort_query_file(src_file_path, obj_file_path):
 
 
 def create_mysql_query_file(src_file, obj_file_path):
-    # print(src_file)
-    # print(obj_file_path)
     sql_reader = SQLReader(src_file)
     queries = []
     while True:
@@ -57,13 +55,19 @@ def create_mysql_query_file(src_file, obj_file_path):
 
 def translate_a_sql_to_mysql_format(query):
     if "date_trunc('day', s1.timeStamp)" in query:
-        return query.replace("date_trunc('day', s1.timeStamp)", "DATE_FORMAT(s1.timeStamp, 'DD')")
+        query = query.replace("date_trunc('day', s1.timeStamp)", "DATE_FORMAT(s1.timeStamp, 'DD')")
     if "date_trunc('day', s2.timeStamp)" in query:
-        return query.replace("date_trunc('day', s2.timeStamp)", "DATE_FORMAT(s2.timeStamp, 'DD')")
+        query = query.replace("date_trunc('day', s2.timeStamp)", "DATE_FORMAT(s2.timeStamp, 'DD')")
     if "date_trunc('day', timestamp)" in query:
-        return query.replace("date_trunc('day', timestamp)", "DATE_FORMAT(timeStamp, 'DD')")
+        query = query.replace("date_trunc('day', timestamp)", "DATE_FORMAT(timeStamp, 'DD')")
     if "date_trunc('day', so.timestamp)" in query:
-        return query.replace("date_trunc('day', so.timestamp)", "DATE_FORMAT(so.timeStamp, 'DD')")
+        query = query.replace("date_trunc('day', so.timestamp)", "DATE_FORMAT(so.timeStamp, 'DD')")
+    if "date_trunc('day', so.timeStamp)" in query:
+        query = query.replace("date_trunc('day', so.timeStamp)", "DATE_FORMAT(so.timeStamp, 'DD')")
+    if "= ANY(array[" in query:
+        query = query.replace("= ANY(array[", " in (").replace("]", "")
+    if "=ANY(array[" in query:
+        query = query.replace("=ANY(array[", " in (").replace("]", "")
     return query
 
 class DataProcessor:

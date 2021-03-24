@@ -89,20 +89,21 @@ class Experiment:
 
 def run_exp1_varying_mpl():
     freq = 'low'
-    for db_type in ['postgresql', 'mysql']:
-        for mpl in [2, 4, 6, 8, 10]:
-            iso_idx = 2
-            exp = Experiment(db_type=db_type, freq=freq, isolation_level=iso_idx, mpl=mpl, transaction_style='both')
-            print(f"db_type={db_type}, freq={freq}, iso_level={iso_idx}, mpl={mpl}, transaction='both'")
-            exp.run_experiment()
-            print("--------------")
+    for db_type in ['mysql', 'postgresql']:
+        # for mpl in [2, 4, 6, 8, 10]:
+        mpl = 6
+        iso_idx = 2
+        exp = Experiment(db_type=db_type, freq=freq, isolation_level=iso_idx, mpl=mpl, transaction_style='both')
+        print(f"db_type={db_type}, freq={freq}, iso_level={iso_idx}, mpl={mpl}, transaction='both'")
+        exp.run_experiment()
+        print("--------------")
 
 
 def run_exp2_varying_isolation_level():
     freq = 'low'
     mpl = 4
-    for db_type in ['postgresql', 'mysql']:
-        for iso_idx in range(1, 5):
+    for db_type in ['mysql', 'postgresql']:
+        for iso_idx in [4, 3, 2, 1]: #  range(1, 5):
             exp = Experiment(db_type=db_type, freq=freq, isolation_level=iso_idx, mpl=mpl, transaction_style='both')
             print(f"db_type={db_type}, freq={freq}, iso_level={iso_idx}, mpl={mpl}, transaction='both'")
             exp.run_experiment()
@@ -112,8 +113,8 @@ def run_exp2_varying_isolation_level():
 def run_exp3_varying_freq():
     mpl = 4
     iso_idx = 2
-    for freq in ['low', 'high']:
-        for db_type in ['postgresql', 'mysql']:
+    for db_type in ['mysql', 'postgresql']:
+        for freq in ['low', 'high']:
             exp = Experiment(db_type=db_type, freq=freq, isolation_level=iso_idx, mpl=mpl, transaction_style='both')
             print(f"db_type={db_type}, freq={freq}, iso_level={iso_idx}, mpl={mpl}, transaction='both'")
             exp.run_experiment()
@@ -121,4 +122,6 @@ def run_exp3_varying_freq():
 
 
 if __name__ == '__main__':
-    run_exp1_varying_mpl()
+    # run_exp1_varying_mpl()
+    run_exp2_varying_isolation_level()
+    # run_exp3_varying_freq()

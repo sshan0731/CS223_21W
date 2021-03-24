@@ -42,10 +42,12 @@ class DBConnection:
             self.connection_pool.putconn(self.connection)
 
     def get_cursor(self):
+        if self.db_type == 'mysql':
+            return self.connection.cursor(buffered=True)
         if self.db_type == 'postgresql':
             self.get_cursor_postgresql()
             # return self.connection.cursor()
-        return self.connection.cursor()
+            return self.connection.cursor()
 
     def close(self, cursor=None):
         # if self.db_type == 'mysql':

@@ -47,12 +47,13 @@ class Worker(Process):
                         break
                     except Empty:
                         counter += 1
-        print(f"in worker, commit_counter={self.connection.commit_counter}, query_counter={self.connection.query_counter}")
+        # print(f"in worker, commit_counter={self.connection.commit_counter}, query_counter={self.connection.query_counter}")
+
         self.job_cache.analysis_dict['transaction_counter'] += self.connection.commit_counter
         self.job_cache.analysis_dict['query_counter'] += self.connection.query_counter
         self.job_cache.analysis_dict['insert_duration'] += self.insert_duration
         self.job_cache.analysis_dict['query_duration'] += self.query_duration
-        # print(f"a worker finished processing - committed transaction: {self.connection.commit_counter}")
+        # print(f"{self.job_cache.analysis_dict['transaction_counter']}, {self.job_cache.analysis_dict['query_counter']}, {self.job_cache.analysis_dict['insert_duration']}, {self.job_cache.analysis_dict['query_duration']}")
 
     def close(self):
         self.connection.close(self.cursor)
@@ -65,11 +66,13 @@ class Worker(Process):
             for sql in self.transaction.sql_list:
                 # print(f"execute sql: {sql}")
                 self.cursor.execute(sql)
+            # print(self.transaction.sql_list[0])
             if "INSERT" in self.transaction.sql_list[0]:
                 self.connection.commit()
                 end_time = datetime.now()
                 self.insert_duration += ((end_time-start_time).total_seconds())
             else:
+                # print(self.transaction.sql_list[0])
                 self.connection.query_counter += 1
                 end_time = datetime.now()
                 # print(((end_time - start_time).total_seconds()))

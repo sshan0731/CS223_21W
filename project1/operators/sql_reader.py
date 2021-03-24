@@ -40,10 +40,17 @@ class SQLReader:
 
     @staticmethod
     def remove_time_in_a_query_line(query_line):
-        return query_line.split('"')[-2]
+        if "SELECT" in query_line:
+            return query_line.split('"')[-2]
+        return query_line
+
+    # @staticmethod
+    # def remove_time_in_a_query_line(query_line):
+    #     return query_line.split('"')[-2]
+
 
     def get_next_query_sql(self):
-        print(f"in reader: {self.get_next_query_sql_line()}")
+        # print(f"in reader: {self.get_next_query_sql_line()}")
         return self.remove_time_in_a_query_line(self.get_next_query_sql_line())
 
     def close(self):

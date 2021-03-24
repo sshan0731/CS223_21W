@@ -24,9 +24,6 @@ class Simulator:
         for worker in self.workers:
             worker.join()
         self.job_reader.join()
-        # end_time = datetime.now()
-        # print(f"simulation end - {end_time}")
-        # print(f"time duration - {(end_time-start_time).total_seconds()}s")
         print(f"transaction counter= {self.job_cache.analysis_dict['transaction_counter']}, query counter= {self.job_cache.analysis_dict['query_counter']}, total num = {self.job_cache.analysis_dict['transaction_counter'] + self.job_cache.analysis_dict['query_counter']}")
         print(f"insert duration = {self.job_cache.analysis_dict['insert_duration']}, query duration = {self.job_cache.analysis_dict['query_duration']}")
         print(f"total duration = {self.job_cache.analysis_dict['insert_duration'] + self.job_cache.analysis_dict['query_duration']}")
