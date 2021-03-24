@@ -1,0 +1,131 @@
+from multiprocessing import Process
+
+from project1.models.transaction import Transaction
+from datetime import datetime
+
+from project1.operators.sql_reader import SQLReader
+from project1.processors.job_cache import JobCache
+
+epoch_length = 24 * 60 * 60
+
+
+class JobReader(Process):
+    def __init__(self, freq, job_cache: JobCache, operation_type="both", db_type="posegresql"):
+        super().__init__()
+        self.freq = freq
+        self.job_cache = job_cache
+        # self.t_queue = Queue()
+        self.operation_type = operation_type
+        self.db_type = db_type
+        self.observation_file = f"../original_data/data/{self.freq}_concurrency/observation_sorted.sql"
+        self.semantic_file = f"../original_data/data/{self.freq}_concurrency/semantic_sorted.sql"
+        self.query_file = f"../original_data/queries/{self.freq}_concurrency/queries_sorted.txt"
+        if self.db_type == "mysql":
+            self.query_file = f"../original_data/queries/{self.freq}_concurrency/queries_mysql_sorted.txt"
+        self.current_transaction = Transaction()
+        self.epoch_start_time = ""
+        self.transaction_dict = {}
+
+    def is_in_epoch_interval(self, timestamp):
+        dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S').strftime('%s')
+        # print(f"in is_in_epoch_interval: {int(dt)}")
+        if self.epoch_start_time == "":
+            self.epoch_start_time = epoch_length * (int(dt) / epoch_length)
+            return True
+        if (int(dt) - self.epoch_start_time) / epoch_length < 1:
+            return True
+        self.epoch_start_time = epoch_length * (int(dt) / epoch_length)
+        return False
+
+    @staticmethod
+    def extract_sensor_id(sql):
+        sensor_id = ""
+        if "INSERT" in sql:
+            temp = sql.split("'")
+            sensor_id = temp[-2]
+            # print(sensor_id)
+
+        return sensor_id
+
+    def run(self) -> None:
+        if self.operation_type == "insert" or self.operation_type == "both":
+            self.read_a_insert_file(self.observation_file)
+            self.epoch_start_time = ""
+            self.read_a_insert_file(self.semantic_file)
+            self.epoch_start_time = ""
+        if self.operation_type == "query" or self.operation_type == "both":
+            self.read_a_query_file(self.query_file)
+
+    # def read_a_query_file(self, file_path):
+    #     sql_reader = SQLReader(file_path)
+    #     while True:
+    #         current_sql = sql_reader.get_next_query_sql()
+    #         if not current_sql:
+    #             break
+    #         transaction = Transaction()
+    #         transaction.add_a_sql_to_list(current_sql)
+    #     sql_reader.close()
+
+    def read_a_query_file(self, file_path):
+        sql_reader = SQLReader(file_path)
+        while True:
+            sql_line = sql_reader.get_next_query_sql_line()
+            if not sql_line:
+                self.job_cache.add_job(self.current_transaction)
+                break
+            sql = sql_reader.remove_time_in_a_query_line(sql_line)
+            if self.is_in_epoch_interval(sql_reader.extract_query_timestamp(sql_line)):
+                self.current_transaction.add_a_sql_to_list(sql)
+            else:
+                self.job_cache.add_job(self.current_transaction)
+                transaction = Transaction()
+                transaction.add_a_sql_to_list(sql)
+        sql_reader.close()
+
+    def read_a_insert_file(self, file_path):
+        sql_reader = SQLReader(file_path)
+        while True:
+            current_sql = sql_reader.get_next_insert_sql()
+            if not current_sql:
+                for t in self.transaction_dict.values():
+                    self.job_cache.add_job(t)
+                self.transaction_dict.clear()
+                break
+
+            if self.is_in_epoch_interval(SQLReader.extract_timestamp(current_sql)):
+                sensor_id = self.extract_sensor_id(current_sql)
+                if sensor_id not in self.transaction_dict:
+                    transaction = Transaction()
+                    transaction.add_a_sql_to_list(current_sql)
+                    self.transaction_dict[sensor_id] = transaction
+                else:
+                    transaction = self.transaction_dict[sensor_id]
+                    transaction.add_a_sql_to_list(current_sql)
+                    self.transaction_dict[sensor_id] = transaction
+            else:
+                for t in self.transaction_dict.values():
+                    self.job_cache.add_job(t)
+                self.transaction_dict.clear()
+                sensor_id = self.extract_sensor_id(current_sql)
+                transaction = Transaction()
+                transaction.add_a_sql_to_list(current_sql)
+                self.transaction_dict[sensor_id] = transaction
+        sql_reader.close()
+
+
+# if __name__ == '__main__':
+# #     test
+#     sql = "INSERT INTO thermometerobservation VALUES ('ec68444e-b6d6-426e-89ce-9a1e3f6b1bef', 84, '2017-11-25 12:03:00', 'eed58f99_5851_4a52_90c7_3f2d3c9807d3');"
+#     JobReader.extract_sensor_id(sql)
+#     # test function is_in_epoch_interval()
+#     # sql = "INSERT INTO thermometerobservation VALUES ('9ed43c63-74ff-40f2-96cc-c59c40c8d0be', 67, '2017-11-17 13:18:00', 'fe7650c6_f0d2_4e69_81b6_15e96f381814');"
+#     # reader = JobReader('mysql', 'low')
+#     # print(f"{reader.is_in_epoch_interval(sql)} --- {reader.epoch_start_time}")  # should be true
+#     # sql = "INSERT INTO thermometerobservation VALUES ('9ed43c63-74ff-40f2-96cc-c59c40c8d0be', 67, '2017-11-17 13:18:10', 'fe7650c6_f0d2_4e69_81b6_15e96f381814');"
+#     # print(f"{reader.is_in_epoch_interval(sql)} --- {reader.epoch_start_time}")  # should be true
+#     # sql = "INSERT INTO thermometerobservation VALUES ('9ed43c63-74ff-40f2-96cc-c59c40c8d0be', 67, '2018-11-17 13:18:10', 'fe7650c6_f0d2_4e69_81b6_15e96f381814');"
+#     # print(f"{reader.is_in_epoch_interval(sql)} --- {reader.epoch_start_time}")  # should be false
+#
+#     # test read jobs
+#     reader = JobReader(freq='low')
+#     reader.start()
